@@ -1,0 +1,16 @@
+{
+  "name": "scripts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "deployments.js",
+  "scripts": {
+    "res:build": "rescript",
+    "res:start": "rescript build -w",
+    "res:clean": "rescript clean"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "rescript": "^9.1.2"
+  }
+}
