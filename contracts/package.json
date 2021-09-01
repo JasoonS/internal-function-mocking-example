@@ -5,7 +5,6 @@
   "license": "BUSL-1.1",
   "scripts": {
     "compile": "hardhat compile",
-    "truffle-compile": "truffle compile --all",
     "test": "hardhat test # You need to run 'yarn generate-all' before this command - but alas, truffle tests will be removed soon",
     "test-waffle": "yarn generate-all && WAFFLE_TEST='true' hardhat test",
     "test-waffle-compiled": "WAFFLE_TEST='true' hardhat test",
@@ -25,9 +24,6 @@
     "format-contracts": "prettier --write 'contracts/**/*.sol'",
     "hardhat": "hardhat",
     "docgen": "hardhat docgen",
-    "save-deployment": "/bin/bash -c 'mkdir -p ./buildsDeployed/deployed && \\cp ./build/contracts/{FloatCapital_v0,FloatToken,LongShort,Migrations,Staker,TokenFactory,Treasury_v0,Dai}.json ./buildsDeployed/deployed/'",
-    "prepair-upgrade": "npm run clean && mkdir -p ./build/contracts && cp -r ./buildsDeployed/deployed/* ./build/contracts/ && npm run truffle-compile",
-    "verify-contracts": "truffle run verify FloatToken LongShort@$LONGSHORT_IMPLEMENTATION Staker@$STAKER_IMPLEMENTATION FloatCapital_v0@$TREASURY_IMPLEMENTATIONTreasury_v0@$FLOAT_CAPITAL_IMPLEMENTATION FloatToken TokenFactory --network $NETWORK",
     "update-testnet-contracts": "yarn prepair-upgrade && rm -f .openzeppelin/unknown-{97,1337}.json && truffle migrate --network binanceTest --reset && mv .openzeppelin/unknown-1337.json .openzeppelin/unknown-97.json && yarn save-deployment",
     "generate-contract-interfaces": "yarn compile && node ../scripts/src/AbiInterfaceGen.bs.js && rescript format -all",
     "generate-test-contracts": "rm -f contracts/testing/generated/* && yarn compile --force --quiet && node ../scripts/src/MockablesGen.bs.js && yarn format-contracts && rescript format -all",

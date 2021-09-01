@@ -252,8 +252,14 @@ let initializeStakerUnit = () => {
     LongShortSmocked.make(),
     FloatTokenSmocked.make(),
     SyntheticTokenSmocked.make(),
-   FloatCapital_v0.make(),
-  ))->JsPromise.then(((staker, longShortSmocked, floatTokenSmocked, syntheticTokenSmocked, floatCapitalSmocked)) =>
+    FloatCapital_v0.make(),
+  ))->JsPromise.then(((
+    staker,
+    longShortSmocked,
+    floatTokenSmocked,
+    syntheticTokenSmocked,
+    floatCapitalSmocked,
+  )) =>
     staker
     ->Staker.setVariable(~name="longShort", ~value=longShortSmocked.address)
     ->JsPromise.map(_ => {
@@ -261,7 +267,7 @@ let initializeStakerUnit = () => {
       longShortSmocked: longShortSmocked,
       floatTokenSmocked: floatTokenSmocked,
       syntheticTokenSmocked: syntheticTokenSmocked,
-      floatCapitalSmocked: floatCapitalSmocked
+      floatCapitalSmocked: floatCapitalSmocked,
     })
   )
 }

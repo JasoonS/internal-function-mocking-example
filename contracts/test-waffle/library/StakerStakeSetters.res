@@ -9,7 +9,12 @@ let turnOffMocking = staker => {
   staker->Staker.setVariable(~name="shouldUseMock", ~value=false)
 }
 
-let setUserIndexOfLastClaimedReward = (staker, ~marketIndex: int, ~user: Ethers.ethAddress, ~rewardIndex: Ethers.BigNumber.t) => {
+let setUserIndexOfLastClaimedReward = (
+  staker,
+  ~marketIndex: int,
+  ~user: Ethers.ethAddress,
+  ~rewardIndex: Ethers.BigNumber.t,
+) => {
   staker->Staker.setVariable(
     ~name="userIndexOfLastClaimedReward",
     ~value=createValueAtKey(marketIndex, createValueAtKey(user, rewardIndex)),
