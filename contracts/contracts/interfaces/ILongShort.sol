@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.13;
 
 interface ILongShort {
   /*╔════════════════════════════╗
     ║           EVENTS           ║
     ╚════════════════════════════╝*/
 
+  event Upgrade(uint256 version);
   event LongShortV1(address admin, address tokenFactory, address staker);
 
   event SystemStateUpdated(
@@ -55,26 +56,74 @@ interface ILongShort {
     uint256 oracleUpdateIndex
   );
 
+  event NextPriceDepositAndStake(
+    uint32 marketIndex,
+    bool isLong,
+    uint256 amountToStake,
+    address user,
+    uint256 oracleUpdateIndex
+  );
+
   event OracleUpdated(uint32 marketIndex, address oldOracleAddress, address newOracleAddress);
 
-  event NewMarketLaunchedAndSeeded(uint32 marketIndex, uint256 initialSeed);
+  event NewMarketLaunchedAndSeeded(uint32 marketIndex, uint256 initialSeed, uint256 marketLeverage);
 
   event ExecuteNextPriceSettlementsUser(address user, uint32 marketIndex);
 
+  event MarketFundingRateMultiplerChanged(uint32 marketIndex, uint256 fundingRateMultiplier_e18);
+
   function syntheticTokens(uint32, bool) external view returns (address);
+
+  function assetPrice(uint32) external view returns (int256);
+
+  function oracleManagers(uint32) external view returns (address);
+
+  function latestMarket() external view returns (uint32);
 
   function marketUpdateIndex(uint32) external view returns (uint256);
 
-  function syntheticToken_priceSnapshot(
+  function batched_amountPaymentToken_deposit(uint32, bool) external view returns (uint256);
+
+  function batched_amountSyntheticToken_redeem(uint32, bool) external view returns (uint256);
+
+  function batched_amountSyntheticToken_toShiftAwayFrom_marketSide(uint32, bool)
+    external
+    view
+    returns (uint256);
+
+  function get_syntheticToken_priceSnapshot(uint32, uint256)
+    external
+    view
+    returns (uint256, uint256);
+
+  function get_syntheticToken_priceSnapshot_side(
     uint32,
     bool,
     uint256
   ) external view returns (uint256);
 
-  function marketSideValueInPaymentToken(uint32 marketIndex, bool isLong)
+  function marketSideValueInPaymentToken(uint32 marketIndex)
     external
     view
-    returns (uint256 marketSideValueInPaymentToken);
+    returns (uint128 marketSideValueInPaymentTokenLong, uint128 marketSideValueInPaymentTokenShort);
+
+  function setUserTradeTimer(
+    address user,
+    uint32 marketIndex,
+    bool isLong
+  ) external;
+
+  function checkIfUserIsEligibleToTrade(
+    address user,
+    uint32 marketIndex,
+    bool isLong
+  ) external;
+
+  function checkIfUserIsEligibleToSendSynth(
+    address user,
+    uint32 marketIndex,
+    bool isLong
+  ) external;
 
   function updateSystemState(uint32 marketIndex) external;
 
@@ -110,4 +159,14 @@ interface ILongShort {
   function mintLongNextPrice(uint32 marketIndex, uint256 amount) external;
 
   function mintShortNextPrice(uint32 marketIndex, uint256 amount) external;
+
+  function mintAndStakeNextPrice(
+    uint32 marketIndex,
+    uint256 amount,
+    bool isLong
+  ) external;
+
+  function redeemLongNextPrice(uint32 marketIndex, uint256 amount) external;
+
+  function redeemShortNextPrice(uint32 marketIndex, uint256 amount) external;
 }

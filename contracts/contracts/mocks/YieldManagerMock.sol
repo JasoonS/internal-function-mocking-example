@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
 
@@ -137,6 +137,9 @@ contract YieldManagerMock is IYieldManager {
     uint256 totalValueRealizedForMarket,
     uint256 treasuryYieldPercent_e18
   ) external override longShortOnly returns (uint256) {
+    // Ensure token state is current.
+    settle();
+
     uint256 unrealizedYield = totalHeld - totalValueRealizedForMarket - totalReservedForTreasury;
 
     if (unrealizedYield == 0) {

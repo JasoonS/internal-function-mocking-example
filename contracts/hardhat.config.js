@@ -1,12 +1,11 @@
 require("hardhat-spdx-license-identifier");
 require("@tenderly/hardhat-tenderly"); // https://hardhat.org/plugins/tenderly-hardhat-tenderly.html
 require("solidity-coverage");
-require("@openzeppelin/hardhat-upgrades");
+// require("@openzeppelin/hardhat-upgrades");
 require("./hardhat-plugins/codegen");
-require("hardhat-deploy");
+require("@float-capital/hardhat-deploy");
 require("@nomiclabs/hardhat-ethers");
-
-require("hardhat-docgen");
+require("@nomiclabs/hardhat-etherscan");
 
 let config;
 try {
@@ -31,17 +30,14 @@ let runCoverage =
   !process.env.DONT_RUN_REPORT_SUMMARY ||
   process.env.DONT_RUN_REPORT_SUMMARY.toUpperCase() != "TRUE";
 if (runCoverage) {
-  require("hardhat-abi-exporter");
   require("hardhat-gas-reporter");
 }
+require("hardhat-abi-exporter");
 let isWaffleTest =
   !!process.env.WAFFLE_TEST && process.env.WAFFLE_TEST.toUpperCase() == "TRUE";
-if (isWaffleTest) {
-  require("./test-waffle/Setup.js").mochaSetup();
-  require("@nomiclabs/hardhat-waffle");
-} else {
-  require("@nomiclabs/hardhat-truffle5");
-}
+
+require("@nomiclabs/hardhat-waffle");
+
 
 // This is a sample Buidler task. To learn how to create your own go to
 // https://buidler.dev/guides/create-task.html
@@ -60,7 +56,7 @@ task("accounts", "Prints the list of accounts", async () => {
 module.exports = {
   // This is a sample solc configuration that specifies which version of solc to use
   solidity: {
-    version: "0.8.3",
+    version: "0.8.13",
     settings: {
       optimizer: {
         enabled: true,
@@ -82,7 +78,7 @@ module.exports = {
     },
   },
   paths: {
-    tests: isWaffleTest ? "./test-waffle" : "./test",
+    tests: isWaffleTest ? "./test" : "./test",
   },
   namedAccounts: {
     deployer: {
@@ -121,12 +117,14 @@ module.exports = {
     path: "./abis",
     clear: true,
     flat: true,
+    runOnCompile: true,
     only: [
       ":ERC20Mock$",
       ":YieldManagerMock$",
       ":LongShort$",
       ":SyntheticToken$",
       ":YieldManagerAave$",
+      ":YieldManagerAaveBasic$",
       ":FloatCapital_v0$",
       ":Migrations$",
       ":TokenFactory$",

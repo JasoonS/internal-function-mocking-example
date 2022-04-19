@@ -12,7 +12,7 @@
 open Js.String2
 open MockablesGenTemplates
 
-let filesToMockInternally = ["LongShort.sol", "Staker.sol"]
+let filesToMockInternally = ["longShort/template/LongShort.sol", "staker/template/Staker.sol"]
 
 exception ScriptDoesNotSupportReturnValues(string)
 
@@ -25,7 +25,7 @@ let abisToMockExternally = [
   "YieldManagerMock",
   "LongShort",
   "SyntheticToken",
-  "YieldManagerAave",
+  "YieldManagerAaveBasic",
   "FloatCapital_v0",
   "TokenFactory",
   "FloatToken",
@@ -41,10 +41,11 @@ let abisToMockExternally = [
 let convertASTTypeToSolTypeSimple = typeDescriptionStr => {
   switch typeDescriptionStr {
   | t if t->startsWith("contract ") => typeDescriptionStr->replaceByRe(%re("/contract\s+/g"), "")
+  | t if t->startsWith("struct ") => typeDescriptionStr->replaceByRe(%re("/struct\s+/g"), "")
   | t => t
   }
 }
-let convertASTTypeToSolType = typeDescriptionStr => {
+let convertASTTypeToSolType = (~isDeclaration=true, typeDescriptionStr) => {
   switch typeDescriptionStr {
   | "bool"
   | "address" => typeDescriptionStr
@@ -55,7 +56,9 @@ let convertASTTypeToSolType = typeDescriptionStr => {
   | t if t->startsWith("contract ") => typeDescriptionStr->replaceByRe(%re("/contract\s+/g"), "")
   | t if t->startsWith("enum ") => t->replaceByRe(%re("/enum\s+/g"), "")
   | t if t->startsWith("struct ") =>
-    typeDescriptionStr->replaceByRe(%re("/struct\s+/g"), "") ++ " memory "
+    typeDescriptionStr
+    ->replaceByRe(%re("/struct\s+/g"), "")
+    ->replaceByRe(%re("/Mockable/g"), "") ++ (isDeclaration ? " memory " : "")
   | _ => raise(ScriptDoesNotSupportReturnValues(defaultError))
   }
 }
@@ -242,6 +245,31 @@ filesToMockInternally->Array.forEach(filePath => {
 
   let mockLogger = ref("")
 
+  let optionalConstructor =
+    contractDefinition["nodes"]->Array.keep(x => x["name"] == "")->Array.get(0) // ignore constructors
+
+  let constructor = optionalConstructor->Option.mapWithDefault("", x => {
+    let parameters = x["parameters"]["parameters"]->Array.map(y => y->nodeToTypedIdentifier)
+
+    let params =
+      parameters
+      ->Array.map(x => {
+        x.name
+      })
+      ->commafiy
+
+    let paramsWithTypes =
+      parameters
+      ->Array.map(x =>
+        x.type_->replaceFileNameTypeDefsWithMockableTypeDefs->convertASTTypeToSolType ++
+        " " ++
+        x.name
+      )
+      ->commafiy
+
+    MockablesGenTemplates.constructor(~paramsWithTypes, ~params, ~fileNameWithoutExtension)
+  })
+
   // TODO: modify this code so that it also generates exposed interfaces for interal pure fonctions that aren't virtual.
   let allFunctions = functionVirtualOrPure(contractDefinition["nodes"])->Array.map(((
     x,
@@ -326,7 +354,9 @@ filesToMockInternally->Array.forEach(filePath => {
 
     let mockerReturn =
       x.returnValues
-      ->Array.map(y => "abi.decode(\"\",(" ++ y.type_->convertASTTypeToSolType ++ "))")
+      ->Array.map(y =>
+        "abi.decode(\"\",(" ++ y.type_->convertASTTypeToSolType(~isDeclaration=false) ++ "))"
+      )
       ->commafiy
 
     mockLogger :=
@@ -386,7 +416,12 @@ filesToMockInternally->Array.forEach(filePath => {
   let allFunctionsString = allFunctions->Js.Array2.joinWith("\n")
   let fullBody = allFunctionsString
 
-  let contractMockable = mockingFileTemplate(~prefix, ~fileNameWithoutExtension, ~fullBody)
+  let contractMockable = mockingFileTemplate(
+    ~prefix,
+    ~fileNameWithoutExtension,
+    ~fullBody,
+    ~constructor,
+  )
 
   let outputDirectory = "../contracts/contracts/testing/generated"
   if !folderExists(outputDirectory) {
@@ -419,5 +454,5 @@ filesToMockInternally->Array.forEach(filePath => {
 
 /// Generate rescript smocked interfaces
 bindingsDict->HashMap.String.forEach((key, val) => {
-  Node.Fs.writeFileAsUtf8Sync(`../contracts/test-waffle/library/smock/${key}Smocked.res`, val)
+  Node.Fs.writeFileAsUtf8Sync(`../contracts/test/library/smock/${key}Smocked.res`, val)
 })

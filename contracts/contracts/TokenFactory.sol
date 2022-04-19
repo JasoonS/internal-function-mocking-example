@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.13;
 
-import "./SyntheticToken.sol";
+import "./MIA/SyntheticToken.sol";
 import "./interfaces/ITokenFactory.sol";
 
 /// @title TokenFactory

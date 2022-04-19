@@ -33,7 +33,7 @@ let solASTTypeToRescriptType = typeDescrStr =>
       )
       `array<'${t}>`
     }
-  | t if t->startsWith("struct") => "'struct" // We aren't modeling structs currently. Could implement!
+  | t if t->startsWith("struct") => "abstractStructType" // We aren't modeling structs currently. Could implement!
   | t if t->startsWith("enum") => "int"
   | t if t->startsWith("uint") || t->startsWith("int") => "Ethers.BigNumber.t"
   | t if t->startsWith("contract") || t == "address" => "Ethers.ethAddress"
@@ -246,13 +246,13 @@ let getMockToReturnInternal: functionDef => string = fn => {
   if fn.returnValues->Array.length > 0 {
     `
   @send @scope("${fn.name}Mock")
-  external ${fn.name}MockReturnRaw: (t, (${fn.returnValues->basicReturn})) => unit = "returns"
+  external ${fn.name->lowerCaseFirstLetter}MockReturnRaw: (t, (${fn.returnValues->basicReturn})) => unit = "returns"
 
   let mock${fn.name->uppercaseFirstLetter}ToReturn: ${fn.returnValues->rescriptReturnAnnotation(
         ~context=Internal,
       )} = (${params}) => {
     checkForExceptions(~functionName="${fn.name}")
-    let _ = internalRef.contents->Option.map(smockedContract => smockedContract->${fn.name}MockReturnRaw((${params})))
+    let _ = internalRef.contents->Option.map(smockedContract => smockedContract->${fn.name->lowerCaseFirstLetter}MockReturnRaw((${params})))
   }
   `
   } else {
@@ -263,18 +263,18 @@ let getMockToReturnInternal: functionDef => string = fn => {
 let getMockToRevertInternal: functionDef => string = fn => {
   `
   @send @scope("${fn.name}Mock")
-  external ${fn.name}MockRevertRaw: (t, ~errorString: string) => unit = "reverts"
+  external ${fn.name->lowerCaseFirstLetter}MockRevertRaw: (t, ~errorString: string) => unit = "reverts"
 
   @send @scope("${fn.name}Mock")
-  external ${fn.name}MockRevertNoReasonRaw: t => unit = "reverts"
+  external ${fn.name->lowerCaseFirstLetter}MockRevertNoReasonRaw: t => unit = "reverts"
 
   let mock${fn.name->uppercaseFirstLetter}ToRevert = (~errorString) => {
     checkForExceptions(~functionName="${fn.name}")
-    let _ = internalRef.contents->Option.map(${fn.name}MockRevertRaw(~errorString))
+    let _ = internalRef.contents->Option.map(${fn.name->lowerCaseFirstLetter}MockRevertRaw(~errorString))
   }
   let mock${fn.name->uppercaseFirstLetter}ToRevertNoReason = () => {
     checkForExceptions(~functionName="${fn.name}")
-    let _ = internalRef.contents->Option.map(${fn.name}MockRevertNoReasonRaw)
+    let _ = internalRef.contents->Option.map(${fn.name->lowerCaseFirstLetter}MockRevertNoReasonRaw)
   }
   `
 }
@@ -311,9 +311,9 @@ let internalModule = (functionsAndModifiers, ~contractName) =>
 
   @module("@defi-wonderland/smock") @scope("smock") external smock: string => Js.Promise.t<t> = "fake"
 
-  let setup: ${contractName}.t => JsPromise.t<ContractHelpers.transaction> = contract => {
+  let setup: ${contractName}.t => Promise.t<ContractHelpers.transaction> = contract => {
     smock(mockContractName)
-    ->JsPromise.then(b => {
+    ->Promise.then(b => {
       internalRef := Some(b)
       contract->${contractName}.Exposed.setMocker(~mocker=(b->Obj.magic).address)
     })
@@ -326,12 +326,12 @@ let internalModule = (functionsAndModifiers, ~contractName) =>
 
   let setupFunctionForUnitTesting = (contract, ~functionName) => {
     smock(mockContractName)
-    ->JsPromise.then(b => {
+    ->Promise.then(b => {
       internalRef := Some(b)
       [
         contract->${contractName}.Exposed.setMocker(~mocker=(b->Obj.magic).address),
         contract->${contractName}.Exposed.setFunctionToNotMock(~functionToNotMock=functionName),
-      ]->JsPromise.all
+      ]->Promise.all
     })
   }
 

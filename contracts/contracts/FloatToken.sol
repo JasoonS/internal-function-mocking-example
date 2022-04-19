@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/presets/ERC20PresetMinterPauserUpgradeable.sol";
 
@@ -42,10 +42,10 @@ contract FloatToken is
    @param stakerAddress The staker contract that controls minting of the token
    */
   function initialize(
-    string calldata name,
-    string calldata symbol,
+    string memory name,
+    string memory symbol,
     address stakerAddress
-  ) external initializer {
+  ) public initializer {
     __ERC20_init(name, symbol);
     __ERC20Burnable_init();
     __Pausable_init();
@@ -55,13 +55,15 @@ contract FloatToken is
 
     renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
     renounceRole(MINTER_ROLE, msg.sender);
-    renounceRole(PAUSER_ROLE, msg.sender);
 
     _setupRole(DEFAULT_ADMIN_ROLE, stakerAddress);
     _setupRole(MINTER_ROLE, stakerAddress);
-    _setupRole(PAUSER_ROLE, stakerAddress);
+    _setupRole(PAUSER_ROLE, msg.sender);
 
     _setupRole(UPGRADER_ROLE, msg.sender);
+
+    // Token starts as paused
+    _pause();
   }
 
   /*╔═══════════════════════════════════════════════════════════════════╗
@@ -129,6 +131,16 @@ contract FloatToken is
     super._burn(account, amount);
   }
 
+  function totalSupply()
+    public
+    view
+    virtual
+    override(ERC20Upgradeable, IFloatToken)
+    returns (uint256)
+  {
+    return ERC20Upgradeable.totalSupply();
+  }
+
   function transfer(address recipient, uint256 amount)
     public
     virtual
@@ -136,5 +148,13 @@ contract FloatToken is
     returns (bool)
   {
     return ERC20Upgradeable.transfer(recipient, amount);
+  }
+
+  function burnFrom(address account, uint256 amount)
+    public
+    virtual
+    override(ERC20BurnableUpgradeable, IFloatToken)
+  {
+    ERC20BurnableUpgradeable.burnFrom(account, amount);
   }
 }

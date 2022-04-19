@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.13;
 
 interface IStaker {
   /*╔════════════════════════════╗
     ║           EVENTS           ║
     ╚════════════════════════════╝*/
+
+  event Upgrade(uint256 version);
 
   event StakerV1(
     address admin,
@@ -36,6 +38,8 @@ interface IStaker {
 
   event StakeWithdrawn(address user, address token, uint256 amount);
 
+  event StakeWithdrawnWithFees(address user, address token, uint256 amount, uint256 amountFees);
+
   // Note: the `amountFloatMinted` isn't strictly needed by the graph, but it is good to add it to validate calculations are accurate.
   event FloatMinted(address user, uint32 marketIndex, uint256 amountFloatMinted);
 
@@ -55,6 +59,14 @@ interface IStaker {
   );
 
   event FloatPercentageUpdated(uint256 floatPercentage);
+
+  event NextPriceStakeShift(
+    address user,
+    uint32 marketIndex,
+    uint256 amount,
+    bool isShiftFromLong,
+    uint256 userShiftIndex
+  );
 
   function userAmountStaked(address, address) external view returns (uint256);
 
@@ -84,5 +96,20 @@ interface IStaker {
     uint256 amountSyntheticTokensToShift,
     uint32 marketIndex,
     bool isShiftFromLong
+  ) external;
+
+  function latestRewardIndex(uint32 marketIndex) external view returns (uint256);
+
+  // TODO: couldn't get this to work!
+  function safe_getUpdateTimestamp(uint32 marketIndex, uint256 latestUpdateIndex)
+    external
+    view
+    returns (uint256);
+
+  function mintAndStakeNextPrice(
+    uint32 marketIndex,
+    uint256 amount,
+    bool isLong,
+    address user
   ) external;
 }

@@ -19,11 +19,15 @@ function externalMockerModifierBody(functionName, mockerArguments) {
 }
 
 function internalMockingFileTemplate(fileNameWithoutExtension, parentImports, contractBody) {
-  return "// SPDX-License-Identifier: BUSL-1.1 \n pragma solidity 0.8.3;\n\nimport \"./" + fileNameWithoutExtension + "Mockable.sol\";\n\n" + parentImports + "\n\ncontract " + fileNameWithoutExtension + "ForInternalMocking {\n  " + contractBody + "\n}";
+  return "// SPDX-License-Identifier: BUSL-1.1 \n pragma solidity 0.8.13;\n\nimport \"./" + fileNameWithoutExtension + "Mockable.sol\";\nimport \"../" + fileNameWithoutExtension + "InternalStateSetters.sol\";\n\n" + parentImports + "\n\ncontract " + fileNameWithoutExtension + "ForInternalMocking {\n  " + contractBody + "\n}";
 }
 
-function mockingFileTemplate(prefix, fileNameWithoutExtension, fullBody) {
-  return prefix + "\nimport \"./" + fileNameWithoutExtension + "ForInternalMocking.sol\";\nimport \"../" + fileNameWithoutExtension + "InternalStateSetters.sol\";\n\ncontract " + fileNameWithoutExtension + "Mockable is " + fileNameWithoutExtension + "InternalStateSetters {\n\n  " + fileNameWithoutExtension + "ForInternalMocking mocker;\n  bool shouldUseMock;\n  string functionToNotMock;\n\n  function setMocker(" + fileNameWithoutExtension + "ForInternalMocking _mocker) external {\n    mocker = _mocker;\n    shouldUseMock = true;\n  }\n\n  function setFunctionToNotMock(string calldata _functionToNotMock) external {\n    functionToNotMock = _functionToNotMock;\n    shouldUseMock = true;\n  }\n\n" + fullBody + "\n}\n";
+function constructor(paramsWithTypes, params, fileNameWithoutExtension) {
+  return "constructor(" + paramsWithTypes + ") " + fileNameWithoutExtension + "InternalStateSetters(" + params + ") {}";
+}
+
+function mockingFileTemplate(prefix, fileNameWithoutExtension, fullBody, constructor) {
+  return prefix + "\nimport \"./" + fileNameWithoutExtension + "ForInternalMocking.sol\";\nimport \"../" + fileNameWithoutExtension + "InternalStateSetters.sol\";\n\ncontract " + fileNameWithoutExtension + "Mockable is " + fileNameWithoutExtension + "InternalStateSetters {\n\n  " + fileNameWithoutExtension + "ForInternalMocking mocker;\n  bool shouldUseMock;\n  string functionToNotMock;\n\n  " + constructor + "\n\n  function setMocker(" + fileNameWithoutExtension + "ForInternalMocking _mocker) external {\n    mocker = _mocker;\n  }\n\n  function disableMocker() external {\n    shouldUseMock = false;\n  }\n\n  function setFunctionToNotMock(string calldata _functionToNotMock) external {\n    functionToNotMock = _functionToNotMock;\n    shouldUseMock = true;\n  }\n\n" + fullBody + "\n}\n";
 }
 
 exports.mockableFunctionBody = mockableFunctionBody;
@@ -31,5 +35,6 @@ exports.externalMockerFunctionBody = externalMockerFunctionBody;
 exports.mockableModifierBody = mockableModifierBody;
 exports.externalMockerModifierBody = externalMockerModifierBody;
 exports.internalMockingFileTemplate = internalMockingFileTemplate;
+exports.constructor = constructor;
 exports.mockingFileTemplate = mockingFileTemplate;
 /* No side effect */

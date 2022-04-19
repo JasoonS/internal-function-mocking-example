@@ -13,8 +13,8 @@ var Belt_HashMapString = require("rescript/lib/js/belt_HashMapString.js");
 var MockablesGenTemplates = require("./templates/MockablesGenTemplates.bs.js");
 
 var filesToMockInternally = [
-  "LongShort.sol",
-  "Staker.sol"
+  "longShort/template/LongShort.sol",
+  "staker/template/Staker.sol"
 ];
 
 var ScriptDoesNotSupportReturnValues = /* @__PURE__ */Caml_exceptions.create("MockablesGen.ScriptDoesNotSupportReturnValues");
@@ -26,7 +26,7 @@ var abisToMockExternally = [
   "YieldManagerMock",
   "LongShort",
   "SyntheticToken",
-  "YieldManagerAave",
+  "YieldManagerAaveBasic",
   "FloatCapital_v0",
   "TokenFactory",
   "FloatToken",
@@ -42,12 +42,15 @@ var abisToMockExternally = [
 function convertASTTypeToSolTypeSimple(typeDescriptionStr) {
   if (typeDescriptionStr.startsWith("contract ")) {
     return typeDescriptionStr.replace(/contract\s+/g, "");
+  } else if (typeDescriptionStr.startsWith("struct ")) {
+    return typeDescriptionStr.replace(/struct\s+/g, "");
   } else {
     return typeDescriptionStr;
   }
 }
 
-function convertASTTypeToSolType(typeDescriptionStr) {
+function convertASTTypeToSolType(isDeclarationOpt, typeDescriptionStr) {
+  var isDeclaration = isDeclarationOpt !== undefined ? isDeclarationOpt : true;
   switch (typeDescriptionStr) {
     case "address" :
     case "bool" :
@@ -71,7 +74,9 @@ function convertASTTypeToSolType(typeDescriptionStr) {
         return typeDescriptionStr.replace(/enum\s+/g, "");
       }
       if (typeDescriptionStr.startsWith("struct ")) {
-        return typeDescriptionStr.replace(/struct\s+/g, "") + " memory ";
+        return typeDescriptionStr.replace(/struct\s+/g, "").replace(/Mockable/g, "") + (
+                isDeclaration ? " memory " : ""
+              );
       }
       throw {
             RE_EXN_ID: ScriptDoesNotSupportReturnValues,
@@ -298,6 +303,19 @@ Belt_Array.forEach(filesToMockInternally, (function (filePath) {
         var mockLogger = {
           contents: ""
         };
+        var optionalConstructor = Belt_Array.get(Belt_Array.keep(contractDefinition.nodes, (function (x) {
+                    return x.name === "";
+                  })), 0);
+        var constructor = Belt_Option.mapWithDefault(optionalConstructor, "", (function (x) {
+                var parameters = Belt_Array.map(x.parameters.parameters, nodeToTypedIdentifier);
+                var params = Globals.commafiy(Belt_Array.map(parameters, (function (x) {
+                            return x.name;
+                          })));
+                var paramsWithTypes = Globals.commafiy(Belt_Array.map(parameters, (function (x) {
+                            return convertASTTypeToSolType(undefined, replaceFileNameTypeDefsWithMockableTypeDefs(x.type_)) + " " + x.name;
+                          })));
+                return MockablesGenTemplates.constructor(paramsWithTypes, params, fileNameWithoutExtension);
+              }));
         var allFunctions = Belt_Array.map(functionVirtualOrPure(contractDefinition.nodes), (function (param) {
                 var original = param[1];
                 var x = param[0];
@@ -319,14 +337,14 @@ Belt_Array.forEach(filesToMockInternally, (function (filePath) {
                             }
                           })));
                 var mockerArguments = Globals.commafiy(Belt_Array.map(x.parameters, (function (x) {
-                            return convertASTTypeToSolType(replaceFileNameTypeDefsWithMockableTypeDefs(x.type_));
+                            return convertASTTypeToSolType(undefined, replaceFileNameTypeDefsWithMockableTypeDefs(x.type_));
                           })));
                 var storageParametersFormatted = reduceStrArr(Belt_Array.map(storageParameters, (function (x) {
-                            return "\n          " + convertASTTypeToSolType(removeFileNameFromTypeDefs(x.type_)) + " " + x.name + "_temp1 = " + x.name + ";\n        ";
+                            return "\n          " + convertASTTypeToSolType(undefined, removeFileNameFromTypeDefs(x.type_)) + " " + x.name + "_temp1 = " + x.name + ";\n        ";
                           })));
                 var arr = x.returnValues;
                 var mockerReturnValues = arr.length !== 0 ? "returns (" + Globals.commafiy(Belt_Array.map(arr, (function (x) {
-                              return convertASTTypeToSolType(x.type_) + " " + x.name;
+                              return convertASTTypeToSolType(undefined, x.type_) + " " + x.name;
                             }))) + ")" : "";
                 var exposedCallArguments = Globals.commafiy(Belt_Array.map(x.parameters, (function (x) {
                             var storageLocation = x.storageLocationString === "default" ? "" : x.storageLocationString;
@@ -339,7 +357,7 @@ Belt_Array.forEach(filesToMockInternally, (function (filePath) {
                     isPure ? "\n" : functionDefinition + MockablesGenTemplates.mockableFunctionBody(x.name, storageParametersFormatted, mockerParameterCalls)
                   );
                 var mockerReturn = Globals.commafiy(Belt_Array.map(x.returnValues, (function (y) {
-                            return "abi.decode(\"\",(" + convertASTTypeToSolType(y.type_) + "))";
+                            return "abi.decode(\"\",(" + convertASTTypeToSolType(false, y.type_) + "))";
                           })));
                 mockLogger.contents = mockLogger.contents + MockablesGenTemplates.externalMockerFunctionBody(x.name, mockerArguments, mockerReturnValues, mockerReturn);
                 return result;
@@ -373,7 +391,7 @@ Belt_Array.forEach(filesToMockInternally, (function (filePath) {
         var indexOfFirstImports = body.indexOf("import");
         var prefix = body.substring(0, indexOfFirstImports) + parentImports;
         var allFunctionsString = allFunctions.join("\n");
-        var contractMockable = MockablesGenTemplates.mockingFileTemplate(prefix, fileNameWithoutExtension, allFunctionsString);
+        var contractMockable = MockablesGenTemplates.mockingFileTemplate(prefix, fileNameWithoutExtension, allFunctionsString, constructor);
         var outputDirectory = "../contracts/contracts/testing/generated";
         if (!Fs.existsSync(outputDirectory)) {
           Fs.mkdirSync(outputDirectory, {
@@ -391,7 +409,7 @@ Belt_Array.forEach(filesToMockInternally, (function (filePath) {
       }));
 
 Belt_HashMapString.forEach(bindingsDict, (function (key, val) {
-        Fs.writeFileSync("../contracts/test-waffle/library/smock/" + key + "Smocked.res", val, "utf8");
+        Fs.writeFileSync("../contracts/test/library/smock/" + key + "Smocked.res", val, "utf8");
         
       }));
 

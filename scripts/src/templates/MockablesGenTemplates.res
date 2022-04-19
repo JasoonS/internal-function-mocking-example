@@ -42,10 +42,12 @@ let externalMockerModifierBody = (~functionName, ~mockerArguments) =>
 function ${functionName}Mock(${mockerArguments}) public pure {}
 `
 
+//TODO: the licence and the solidity verson should be a config variable!
 let internalMockingFileTemplate = (~fileNameWithoutExtension, ~parentImports, ~contractBody) =>
-  `// SPDX-License-Identifier: BUSL-1.1 \n pragma solidity 0.8.3;
+  `// SPDX-License-Identifier: BUSL-1.1 \n pragma solidity 0.8.13;
 
 import "./${fileNameWithoutExtension}Mockable.sol";
+import "../${fileNameWithoutExtension}InternalStateSetters.sol";
 
 ${parentImports}
 
@@ -53,7 +55,10 @@ contract ${fileNameWithoutExtension}ForInternalMocking {
   ${contractBody}
 }`
 
-let mockingFileTemplate = (~prefix, ~fileNameWithoutExtension, ~fullBody) => {
+let constructor = (~paramsWithTypes, ~params, ~fileNameWithoutExtension) =>
+  `constructor(${paramsWithTypes}) ${fileNameWithoutExtension}InternalStateSetters(${params}) {}`
+
+let mockingFileTemplate = (~prefix, ~fileNameWithoutExtension, ~fullBody, ~constructor) => {
   `${prefix}
 import "./${fileNameWithoutExtension}ForInternalMocking.sol";
 import "../${fileNameWithoutExtension}InternalStateSetters.sol";
@@ -64,9 +69,14 @@ contract ${fileNameWithoutExtension}Mockable is ${fileNameWithoutExtension}Inter
   bool shouldUseMock;
   string functionToNotMock;
 
+  ${constructor}
+
   function setMocker(${fileNameWithoutExtension}ForInternalMocking _mocker) external {
     mocker = _mocker;
-    shouldUseMock = true;
+  }
+
+  function disableMocker() external {
+    shouldUseMock = false;
   }
 
   function setFunctionToNotMock(string calldata _functionToNotMock) external {

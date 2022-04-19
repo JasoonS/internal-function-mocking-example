@@ -35,15 +35,17 @@ abis
 ast
 
 # No need to keep javascript files in contract tests
-test-waffle/**/*.js
+test/**/*.js
 
-test-waffle/library/contracts/*
-!test-waffle/library/contracts/.gitkeep
-test-waffle/library/smock/*
-!test-waffle/library/smock/.gitkeep
+test/library/contracts/*
+!test/library/contracts/.gitkeep
+test/library/smock/*
+!test/library/smock/.gitkeep
 
 contracts/testing/generated/*
 
 contract-docs
 
 deployments
+
+codegen-temp

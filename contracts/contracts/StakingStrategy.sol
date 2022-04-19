@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -47,8 +47,8 @@ contract StakingStrategy is Initializable, UUPSUpgradeable, AccessControlUpgrade
     ╚═════════════════════════════╝*/
   function depositLongAndShortTokens(
     uint32 marketIndex,
-    uint256 amountLong,
-    uint256 amountShort
+    uint256 amountToken,
+    bool isLong
   ) public {
     ILongShort _longShort = ILongShort(longShort);
     address longTokenAddress = _longShort.syntheticTokens(marketIndex, true);
@@ -58,21 +58,45 @@ contract StakingStrategy is Initializable, UUPSUpgradeable, AccessControlUpgrade
     //can maybe add this method to longShort contract?
     (uint256 longTokenPrice, uint256 shortTokenPrice) = _getLongAndShortTokenPrice(marketIndex);
 
-    uint256 beforeBalanceOfContract = _getContractStakedBalance(
+    (uint256 longShortRatio, uint256 beforeBalanceOfContract) = _getContractStakedBalanceAndRatio(
       marketIndex,
       longTokenAddress,
       shortTokenAddress,
       longTokenPrice,
       shortTokenPrice
     );
+    (uint256 _amountStakedLong, uint256 _amountStakedShort) = _getTotalLongAndShortTokensStaked(
+      marketIndex,
+      longTokenAddress,
+      shortTokenAddress
+    );
+    uint256 amountOfTokensToMatchRatio;
+
+    if (isLong) {
+      amountOfTokensToMatchRatio = amountToken / (longShortRatio);
+    } else {
+      amountOfTokensToMatchRatio = amountToken * longShortRatio;
+    }
+
     //TODO
     //two transfers - can optimise
-    ISyntheticToken(longTokenAddress).transferFrom(msg.sender, address(this), amountLong);
-    ISyntheticToken(shortTokenAddress).transferFrom(msg.sender, address(this), amountShort);
-    ISyntheticToken(longTokenAddress).stake(amountLong);
-    ISyntheticToken(shortTokenAddress).stake(amountShort);
+    ISyntheticToken(_longShort.syntheticTokens(marketIndex, isLong)).transferFrom(
+      msg.sender,
+      address(this),
+      amountToken
+    );
+    ISyntheticToken(_longShort.syntheticTokens(marketIndex, !isLong)).transferFrom(
+      msg.sender,
+      address(this),
+      amountOfTokensToMatchRatio
+    );
 
-    uint256 totalValueStaked = _getContractStakedBalance(
+    ISyntheticToken(_longShort.syntheticTokens(marketIndex, isLong)).stake(amountToken);
+    ISyntheticToken(_longShort.syntheticTokens(marketIndex, !isLong)).stake(
+      amountOfTokensToMatchRatio
+    );
+
+    (uint256 finalLongShortRatio, uint256 totalValueStaked) = _getContractStakedBalanceAndRatio(
       marketIndex,
       longTokenAddress,
       shortTokenAddress,
@@ -80,16 +104,18 @@ contract StakingStrategy is Initializable, UUPSUpgradeable, AccessControlUpgrade
       shortTokenPrice
     );
 
-    _performShiftingStrategy(
-      marketIndex,
-      totalValueStaked,
-      longTokenAddress,
-      shortTokenAddress,
-      longTokenPrice,
-      shortTokenPrice
-    );
-    //TODO
-    //can seperate this into it's own method?
+    if (finalLongShortRatio != 1) {
+      _performShiftingStrategy(
+        marketIndex,
+        totalValueStaked,
+        longTokenAddress,
+        shortTokenAddress,
+        longTokenPrice,
+        shortTokenPrice
+      );
+    }
+
+    //TODO can seperate this into it's own method?
     uint256 shares;
 
     if (strategyToken.totalSupply() == 0) {
@@ -128,21 +154,26 @@ contract StakingStrategy is Initializable, UUPSUpgradeable, AccessControlUpgrade
   }
 
   //Gets the $ balance of the staked tokens
-  function _getContractStakedBalance(
+  function _getContractStakedBalanceAndRatio(
     uint32 marketIndex,
     address longTokenAddress,
     address shortTokenAddress,
     uint256 longTokenPrice,
     uint256 shortTokenPrice
-  ) internal view returns (uint256) {
+  ) internal view returns (uint256, uint256) {
     uint256 marketUpdateIndex = ILongShort(longShort).marketUpdateIndex(marketIndex);
     (uint256 _amountStakedLong, uint256 _amountStakedShort) = _getTotalLongAndShortTokensStaked(
       marketIndex,
       longTokenAddress,
       shortTokenAddress
     );
+    uint256 longSideValue = (_amountStakedLong * longTokenPrice) / 1e18;
+    uint256 shortSideValue = (_amountStakedShort * shortTokenPrice) / 1e18;
 
-    return (_amountStakedLong * longTokenPrice + _amountStakedShort * shortTokenPrice) / 1e18;
+    uint256 longShortRatio = longSideValue / shortSideValue;
+    uint256 contractBalance = (longSideValue + shortSideValue);
+
+    return (longShortRatio, contractBalance);
   }
 
   function _getLongAndShortTokenPrice(uint32 marketIndex)
@@ -151,16 +182,8 @@ contract StakingStrategy is Initializable, UUPSUpgradeable, AccessControlUpgrade
     returns (uint256 longTokenPrice, uint256 shortTokenPrice)
   {
     uint256 marketUpdateIndex = ILongShort(longShort).marketUpdateIndex(marketIndex);
-    uint256 longTokenPrice = ILongShort(longShort).syntheticToken_priceSnapshot(
-      marketIndex,
-      true,
-      marketUpdateIndex
-    );
-    uint256 shortTokenPrice = ILongShort(longShort).syntheticToken_priceSnapshot(
-      marketIndex,
-      false,
-      marketUpdateIndex
-    );
+    (uint256 longTokenPrice, uint256 shortTokenPrice) = ILongShort(longShort)
+      .get_syntheticToken_priceSnapshot(marketIndex, marketUpdateIndex);
   }
 
   /*╔═════════════════════════════╗
@@ -207,7 +230,7 @@ contract StakingStrategy is Initializable, UUPSUpgradeable, AccessControlUpgrade
     address shortTokenAddress = ILongShort(longShort).syntheticTokens(marketIndex, false);
     (uint256 longTokenPrice, uint256 shortTokenPrice) = _getLongAndShortTokenPrice(marketIndex);
 
-    uint256 totalValueStaked = _getContractStakedBalance(
+    (uint256 longShortRatio, uint256 totalValueStaked) = _getContractStakedBalanceAndRatio(
       marketIndex,
       longTokenAddress,
       shortTokenAddress,
@@ -215,13 +238,15 @@ contract StakingStrategy is Initializable, UUPSUpgradeable, AccessControlUpgrade
       shortTokenPrice
     );
 
-    _performShiftingStrategy(
-      marketIndex,
-      totalValueStaked,
-      longTokenAddress,
-      shortTokenAddress,
-      longTokenPrice,
-      shortTokenPrice
-    );
+    if (longShortRatio != 1) {
+      _performShiftingStrategy(
+        marketIndex,
+        totalValueStaked,
+        longTokenAddress,
+        shortTokenAddress,
+        longTokenPrice,
+        shortTokenPrice
+      );
+    }
   }
 }

@@ -39,8 +39,10 @@ function getRescriptType(typeString) {
     return "bool";
   } else if (typeString === "bytes" || typeString === "bytes32") {
     return "bytes32";
-  } else if (typeString === "uint16" || typeString === "uint32") {
+  } else if (typeString === "uint8" || typeString === "uint32" || typeString === "uint16") {
     return "int";
+  } else if (typeString === "uint256" || typeString === "uint128" || typeString === "uint112" || typeString === "int256" || typeString === "uint80") {
+    return "Ethers.BigNumber.t";
   } else if (typeString === "address[]") {
     return "array<Ethers.ethAddress>";
   } else if (typeString === "string") {
@@ -49,10 +51,6 @@ function getRescriptType(typeString) {
     return "array<int>";
   } else if (typeString === "address") {
     return "Ethers.ethAddress";
-  } else if (typeString === "int256" || typeString === "uint256") {
-    return "Ethers.BigNumber.t";
-  } else if (typeString === "uint8") {
-    return "int";
   } else if (typeString === "bytes4") {
     return "bytes4";
   } else if (typeString.startsWith("tuple")) {
@@ -116,7 +114,7 @@ function typeOutputs(outputs, functionName) {
   return "type " + lowerCaseFirstLetter(functionName) + "Return = " + rescriptType;
 }
 
-function generateConstructor(constructorParams, moduleName) {
+function generateConstructor(constructorParams, _moduleName) {
   var typeNamesFull = typeInputs(constructorParams, /* NamedTyped */0);
   var typeNames = typeInputs(constructorParams, /* NamedUntyped */1);
   var callParams = typeInputs(constructorParams, /* UnnamedUntyped */2);
@@ -178,7 +176,7 @@ var _writeFiles = Belt_Array.map(Js_dict.entries(moduleDictionary), (function (p
         var match = param[1];
         var optExposedFunctions = Js_dict.get(moduleDictionary, moduleName + "Mockable");
         var exposedFunctionBinding = optExposedFunctions !== undefined ? "module Exposed = {\n          let contractName = \"" + moduleName + "Mockable\"\n\n          " + optExposedFunctions[1] + "\n          " + Caml_splice_call.spliceObjApply("", "concat", [Js_dict.values(optExposedFunctions[0])]) + "\n        }" : "";
-        Fs.writeFileSync("../contracts/test-waffle/library/contracts/" + moduleName + ".res", "\n@@ocaml.warning(\"-32\")\nopen SmockGeneral\nopen ContractHelpers\ntype t = {address: Ethers.ethAddress}\nlet contractName = \"" + moduleName + "\"\n\nlet at: Ethers.ethAddress => JsPromise.t<t> = contractAddress =>\n  attachToContract(contractName, ~contractAddress)->Obj.magic\n\n" + match[1] + "\n\n" + Caml_splice_call.spliceObjApply("", "concat", [Js_dict.values(match[0])]) + "\n\n" + exposedFunctionBinding + "\n", "utf8");
+        Fs.writeFileSync("../contracts/test/library/contracts/" + moduleName + ".res", "\n@@ocaml.warning(\"-32\")\nopen SmockGeneral\nopen ContractHelpers\ntype t = {address: Ethers.ethAddress}\nlet contractName = \"" + moduleName + "\"\n\nlet at: Ethers.ethAddress => JsPromise.t<t> = contractAddress =>\n  attachToContract(contractName, ~contractAddress)->Obj.magic\n\n" + match[1] + "\n\n" + Caml_splice_call.spliceObjApply("", "concat", [Js_dict.values(match[0])]) + "\n\n" + exposedFunctionBinding + "\n", "utf8");
         
       }));
 

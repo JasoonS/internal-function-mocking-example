@@ -1,19 +1,21 @@
 {
   "name": "float-contracts",
   "namespace": false,
-  "bs-dependencies": [],
+  "bs-dependencies": [
+    "@ryyppy/rescript-promise"
+  ],
   "ppx-flags": [
     "bs-let/ppx"
   ],
   "sources": [
     {
-      "dir": "test-waffle",
+      "dir": "test",
       "subdirs": true
     },
-    {
-      "dir": "deployTests",
-      "subdirs": true
-    }
+    // {
+    //   "dir": "deployTests",
+    //   "subdirs": true
+    // }
   ],
   "package-specs": {
     "module": "commonjs",

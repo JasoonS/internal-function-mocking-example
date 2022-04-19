@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.13;
 
 import "../interfaces/IOracleManager.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
@@ -27,9 +27,9 @@ contract OracleManagerChainlink is IOracleManager {
   ////////////////////////////////////
   ///// CONTRACT SET-UP //////////////
   ////////////////////////////////////
-  constructor(address _admin, address _chainLinkOracle) {
+  constructor(address _admin, address _chainlinkOracle) {
     admin = _admin;
-    chainlinkOracle = AggregatorV3Interface(_chainLinkOracle);
+    chainlinkOracle = AggregatorV3Interface(_chainlinkOracle);
     oracleDecimals = chainlinkOracle.decimals();
   }
 
@@ -44,7 +44,7 @@ contract OracleManagerChainlink is IOracleManager {
   ////////////////////////////////////
   ///// IMPLEMENTATION ///////////////
   ////////////////////////////////////
-  function _getLatestPrice() internal view returns (int256) {
+  function _getLatestPrice() internal view virtual returns (int256) {
     (, int256 price, , , ) = chainlinkOracle.latestRoundData();
     return price;
   }

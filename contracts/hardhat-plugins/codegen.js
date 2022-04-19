@@ -18,11 +18,11 @@ extendConfig(function (config, userConfig) {
         files: [
           {
             contractName: "LongShort",
-            fullPath: "contracts/LongShort.sol"
+            fullPath: "contracts/longShort/template/LongShort.sol"
           },
           {
             contractName: "Staker",
-            fullPath: "contracts/Staker.sol"
+            fullPath: "contracts/staker/template/Staker.sol"
           }
         ],
       }

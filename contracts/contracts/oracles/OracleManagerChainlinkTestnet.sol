@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.13;
 
 import "./OracleManagerChainlink.sol";
 
@@ -24,11 +24,13 @@ contract OracleManagerChainlinkTestnet is OracleManagerChainlink {
   function updatePrice() external override returns (int256) {
     int256 latestPrice = super._getLatestPrice();
 
+    int256 priceAdjustment = forcedPriceAdjustment;
     if (lastUpdate + maxUpdateIntervalSeconds < block.timestamp) {
-      forcedPriceAdjustment = (forcedPriceAdjustment + 1) % 2;
+      priceAdjustment = (priceAdjustment + 1) % 2;
+      forcedPriceAdjustment = priceAdjustment;
       lastUpdate = block.timestamp;
     }
 
-    return latestPrice + forcedPriceAdjustment;
+    return latestPrice + priceAdjustment;
   }
 }

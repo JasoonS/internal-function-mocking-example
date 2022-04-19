@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-pragma solidity 0.8.3;
+pragma solidity 0.8.13;
 
 import "./abstract/AccessControlledAndUpgradeable.sol";
 
@@ -10,7 +10,7 @@ contract FloatCapital_v0 is AccessControlledAndUpgradeable {
     ║       CONTRACT SETUP        ║
     ╚═════════════════════════════╝*/
 
-  function initialize(address _admin) external initializer {
+  function initialize(address _admin) public initializer {
     _AccessControlledAndUpgradeable_init(_admin);
   }
 
