@@ -1,7 +1,7 @@
 open LetOps;
 open Mocha;
 open Globals;
-open SmockGeneral;
+
 let functionInput = Helpers.randomInteger();
 let degen1Return = Helpers.randomInteger();
 let degen2Return = Helpers.randomInteger();
