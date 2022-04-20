@@ -219,7 +219,7 @@ function internalModule(functionsAndModifiers, contractName) {
 }
 
 function externalModule(functions, contractName) {
-  return "open SmockGeneral\n\n%%raw(`\nconst { expect, use } = require(\"chai\");\nuse(require('@defi-wonderland/smock').smock.matchers);\n`)\n\ntype t = {address: Ethers.ethAddress}\n\n@module(\"@defi-wonderland/smock\") @scope(\"smock\") external makeRaw: string => Js.Promise.t<t> = \"fake\"\nlet make = () => makeRaw(\"" + contractName + "\")\n\n\nlet uninitializedValue: t = None->Obj.magic\n\n  " + Globals.reduceStrArr(Belt_Array.map(functions, (function (f) {
+  return "open SmockGeneral\n\n%%raw(`\nconst { expect, use } = require(\"chai\");\nuse(require('@defi-wonderland/smock').smock.matchers);\n`)\n\ntype t = {address: Ethers.ethAddress}\n\n@module(\"@defi-wonderland/smock\") @scope(\"smock\") external makeRaw: string => Js.Promise.t<t> = \"fake\"\nlet make = () => makeRaw(\"" + contractName + "\")\n\n@module(\"@defi-wonderland/smock\") @scope(\"smock\")\nexternal makeFromContract: " + contractName + ".t => Js.Promise.t<t> = \"fake\"\n\nlet uninitializedValue: t = None->Obj.magic\n\n  " + Globals.reduceStrArr(Belt_Array.map(functions, (function (f) {
                     return getMockToReturnExternal(f) + "\n" + paramTypeForCalls(f) + "\n" + getCallsExternal(f) + "\n" + getMockToRevertExternal(f);
                   }))) + "\n";
 }

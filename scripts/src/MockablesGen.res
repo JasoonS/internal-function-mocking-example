@@ -12,7 +12,7 @@
 open Js.String2
 open MockablesGenTemplates
 
-let filesToMockInternally = ["longShort/template/LongShort.sol", "staker/template/Staker.sol"]
+let filesToMockInternally = ["longShort/template/LongShort.sol", "staker/template/Staker.sol", "demo/InternalMockExample.sol"]
 
 exception ScriptDoesNotSupportReturnValues(string)
 
@@ -23,6 +23,7 @@ let {contains, containsRe, commafiy} = module(Globals)
 let abisToMockExternally = [
   "ERC20Mock",
   "YieldManagerMock",
+  "DegenProtocol",
   "LongShort",
   "SyntheticToken",
   "YieldManagerAaveBasic",
@@ -36,6 +37,7 @@ let abisToMockExternally = [
   "LendingPoolAaveMock",
   "LendingPoolAddressesProviderMock",
   "AaveIncentivesControllerMock",
+  "InternalMockExample",
 ]
 
 let convertASTTypeToSolTypeSimple = typeDescriptionStr => {

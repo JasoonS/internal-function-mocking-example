@@ -375,6 +375,8 @@ type t = {address: Ethers.ethAddress}
 @module("@defi-wonderland/smock") @scope("smock") external makeRaw: string => Js.Promise.t<t> = "fake"
 let make = () => makeRaw("${contractName}")
 
+@module("@defi-wonderland/smock") @scope("smock")
+external makeFromContract: ${contractName}.t => Js.Promise.t<t> = "fake"
 
 let uninitializedValue: t = None->Obj.magic
 

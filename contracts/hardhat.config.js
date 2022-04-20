@@ -120,11 +120,13 @@ module.exports = {
     runOnCompile: true,
     only: [
       ":ERC20Mock$",
+      ":DegenProtocol$",
       ":YieldManagerMock$",
       ":LongShort$",
       ":SyntheticToken$",
       ":YieldManagerAave$",
       ":YieldManagerAaveBasic$",
+      ":InternalMockExample$",
       ":FloatCapital_v0$",
       ":Migrations$",
       ":TokenFactory$",

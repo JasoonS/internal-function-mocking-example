@@ -38,11 +38,12 @@
     "@truffle/contract" "^4.3.8"
     ethers "^4.0.45"
 
-"@defi-wonderland/smock@^2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@defi-wonderland/smock/-/smock-2.0.1.tgz#93796bf30a31a1437c4b76be4d6b95e2b53cc6c4"
-  integrity sha512-LfuGDDOSyp3FRMhNHfOELFJRD+xgs3XmyC+iCPmfLBdEC9EYxepGQq9IBX6jEM7zC64eH7tCEE2+AmSUOrFUFg==
+"@defi-wonderland/smock@^2.0.7":
+  version "2.0.7"
+  resolved "https://registry.yarnpkg.com/@defi-wonderland/smock/-/smock-2.0.7.tgz#59d5fc93e175ad120c5dcdd8294e07525606c855"
+  integrity sha512-RVpODLKZ/Cr0C1bCbhJ2aXbAr2Ll/K2WO7hDL96tqhMzCsA7ToWdDIgiNpV5Vtqqvpftu5ddO7v3TAurQNSU0w==
   dependencies:
+    "@nomiclabs/ethereumjs-vm" "^4.2.2"
     diff "^5.0.0"
     lodash.isequal "^4.5.0"
     lodash.isequalwith "^4.4.0"

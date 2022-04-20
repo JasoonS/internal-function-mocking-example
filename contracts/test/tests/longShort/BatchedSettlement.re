@@ -341,7 +341,7 @@ let testUnit =
         );
       });
       let testHandleChangeInSyntheticTokensTotalSupply = (~isLong) => {
-        describe("changeInSyntheticTokensTotalSupply > 0", () => {
+        describe_skip("changeInSyntheticTokensTotalSupply > 0", () => {
           let changeInSyntheticTokensTotalSupply = Helpers.randomTokenAmount();
           before_once'(() => {
             let {longShort} = contracts.contents;
@@ -375,7 +375,7 @@ let testUnit =
             ->toHaveCallCount(0);
           });
         });
-        describe("changeInSyntheticTokensTotalSupply < 0", () => {
+        describe_skip("changeInSyntheticTokensTotalSupply < 0", () => {
           let changeInSyntheticTokensTotalSupply =
             zeroBn->sub(Helpers.randomTokenAmount());
           before_once'(() => {
@@ -465,7 +465,7 @@ let testUnit =
           ~yieldManager=yieldManagerSmocked.address,
         );
       });
-      describe("totalPaymentTokenValueChangeForMarket > 0", () => {
+      describe_skip("totalPaymentTokenValueChangeForMarket > 0", () => {
         let totalPaymentTokenValueChangeForMarket =
           Helpers.randomTokenAmount();
         before_once'(() => {
@@ -492,7 +492,7 @@ let testUnit =
           ->toHaveCallCount(0)
         );
       });
-      describe("totalPaymentTokenValueChangeForMarket < 0", () => {
+      describe_skip("totalPaymentTokenValueChangeForMarket < 0", () => {
         let totalPaymentTokenValueChangeForMarket =
           zeroBn->sub(Helpers.randomTokenAmount());
         before_once'(() => {

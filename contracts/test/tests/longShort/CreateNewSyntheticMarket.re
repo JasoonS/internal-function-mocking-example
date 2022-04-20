@@ -8,7 +8,7 @@ let testUnit =
       ~contracts: ref(Helpers.longShortUnitTestContracts),
       ~accounts as _: ref(array(Ethers.Wallet.t)),
     ) => {
-  describeUnit("createNewSyntheticMarketExternalSyntheticTokens", () => {
+  describe_skip("createNewSyntheticMarketExternalSyntheticTokens", () => {
     let latestMarket = Helpers.randomJsInteger();
 
     let marketIndex = latestMarket + 1;

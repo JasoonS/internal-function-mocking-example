@@ -23,6 +23,10 @@ extendConfig(function (config, userConfig) {
           {
             contractName: "Staker",
             fullPath: "contracts/staker/template/Staker.sol"
+          },
+          {
+            contractName: "InternalMockExample",
+            fullPath: "contracts/demo/InternalMockExample.sol"
           }
         ],
       }

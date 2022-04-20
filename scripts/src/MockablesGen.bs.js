@@ -14,7 +14,8 @@ var MockablesGenTemplates = require("./templates/MockablesGenTemplates.bs.js");
 
 var filesToMockInternally = [
   "longShort/template/LongShort.sol",
-  "staker/template/Staker.sol"
+  "staker/template/Staker.sol",
+  "demo/InternalMockExample.sol"
 ];
 
 var ScriptDoesNotSupportReturnValues = /* @__PURE__ */Caml_exceptions.create("MockablesGen.ScriptDoesNotSupportReturnValues");
@@ -24,6 +25,7 @@ var defaultError = "This script currently only supports functions that return or
 var abisToMockExternally = [
   "ERC20Mock",
   "YieldManagerMock",
+  "DegenProtocol",
   "LongShort",
   "SyntheticToken",
   "YieldManagerAaveBasic",
@@ -36,7 +38,8 @@ var abisToMockExternally = [
   "OracleManagerMock",
   "LendingPoolAaveMock",
   "LendingPoolAddressesProviderMock",
-  "AaveIncentivesControllerMock"
+  "AaveIncentivesControllerMock",
+  "InternalMockExample"
 ];
 
 function convertASTTypeToSolTypeSimple(typeDescriptionStr) {
