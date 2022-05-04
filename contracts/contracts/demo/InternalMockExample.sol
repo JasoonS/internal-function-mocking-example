@@ -22,12 +22,9 @@ contract InternalMockExample {
     virtual
     returns (uint256)
   {
-    console.log("input", inputNumber);
     uint256 result = _doSomethingDegen(inputNumber);
 
-    console.log("result", result);
-
-    return degenProtocol2.degenFunction(result);
+    return degenProtocol2.degenFunction(result + 5);
   }
 
   function makeNumberGoUp(uint256 inputNumber) external returns (uint256) {

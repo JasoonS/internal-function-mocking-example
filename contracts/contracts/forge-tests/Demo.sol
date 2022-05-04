@@ -2,6 +2,7 @@
 pragma solidity 0.8.13;
 
 import "@float-capital/ds-test/src/test.sol";
+
 import "../testing/generated/InternalMockExampleForInternalMocking.sol";
 import "../testing/generated/InternalMockExampleMockable.sol";
 
